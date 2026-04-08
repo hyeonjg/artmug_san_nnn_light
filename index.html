@@ -1,210 +1,217 @@
-<style>
-  /* 기본 레이아웃 설정 */
-  .gallery-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    font-family: 'Pretendard', sans-serif;
-    position: relative;
-  }
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Gallery</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; background-color: transparent; }
+        
+        .gallery-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
 
-  /* 필터 버튼 스타일 */
-  .filter-controls {
-    text-align: center;
-    margin-bottom: 30px;
-  }
-  .filter-controls label {
-    display: inline-block;
-    padding: 8px 20px;
-    margin: 5px;
-    background: #f0f0f0;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: 0.3s;
-    font-size: 14px;
-  }
+        /* 필터 버튼 - 모바일 대응 */
+        .filter-controls {
+            text-align: center;
+            margin-bottom: 20px;
+            overflow-x: auto; /* 모바일에서 버튼이 많아질 경우 가로 스크롤 가능하게 */
+            white-space: nowrap;
+            padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
+        }
 
-  /* 라디오 버튼을 이용한 필터 로직 (숨김 처리) */
-  input[name="gallery-filter"] { display: none; }
+        .filter-label {
+            display: inline-block;
+            padding: 8px 18px;
+            margin: 4px;
+            background: #f2f2f2;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.3s;
+            user-select: none;
+        }
 
-  /* 선택된 필터 강조 */
-  #filter-all:checked ~ .filter-controls label[for="filter-all"],
-  #filter-type1:checked ~ .filter-controls label[for="filter-type1"],
-  #filter-type2:checked ~ .filter-controls label[for="filter-type2"],
-  #filter-type3:checked ~ .filter-controls label[for="filter-type3"] {
-    background: #333;
-    color: #fff;
-  }
+        input[name="gallery-filter"] { display: none !important; }
 
-.gallery-grid {
-  column-count: 3;
-  column-gap: 15px;
-}
+        /* 체크 시 스타일 */
+        #filter-all:checked ~ div label[for="filter-all"],
+        #filter-type1:checked ~ div label[for="filter-type1"],
+        #filter-type2:checked ~ div label[for="filter-type2"],
+        #filter-type3:checked ~ div label[for="filter-type3"] {
+            background: #333 !important;
+            color: #fff !important;
+        }
 
-.gallery-item {
-  display: inline-block;
-  width: 100%;
-  margin-bottom: 15px;
-}
-  
-  /* 💡 추가됨: 이미지에 마우스를 올리면 클릭 가능한 손가락 모양으로 변경 */
-  .gallery-item img {
-    width: 100%;
-    display: block;
-    height: auto;
-    object-fit: cover;
-    cursor: pointer; 
-  }
+        /* 핀터레스트 그리드 설정 */
+        .gallery-grid {
+            column-count: 3; /* PC 기본 3단 (아트머그 가로폭 고려) */
+            column-gap: 12px;
+        }
 
-  /* 필터링 동작 */
-  .gallery-item { display: none; } /* 기본적으로 숨김 */
+        .gallery-item {
+            display: none;
+            width: 100%;
+            margin-bottom: 12px;
+            break-inside: avoid;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
 
-  /* 💡 수정됨: type3 필터링 로직 추가 */
-  #filter-all:checked ~ .gallery-grid .gallery-item,
-  #filter-type1:checked ~ .gallery-grid .type1,
-  #filter-type2:checked ~ .gallery-grid .type2,
-  #filter-type3:checked ~ .gallery-grid .type3 {
-    display: block;
-  }
+        .gallery-item img {
+            width: 100%;
+            display: block;
+            height: auto;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
 
-  /* 모바일 반응형 (1단) */
-  @media (max-width: 768px) {
-    .gallery-grid {
-      grid-template-columns: repeat(1, 1fr);
-    }
-  }
+        /* 필터 동작 */
+        #filter-all:checked ~ .gallery-grid .gallery-item,
+        #filter-type1:checked ~ .gallery-grid div[data-type="type1"],
+        #filter-type2:checked ~ .gallery-grid div[data-type="type2"],
+        #filter-type3:checked ~ .gallery-grid div[data-type="type3"] {
+            display: inline-block !important;
+        }
 
-  /* =========================================
-     💡 추가됨: 모달(라이트박스) 스타일
-     ========================================= */
-  .modal-overlay {
-    display: none; /* 평소에는 숨김 */
-    position: fixed;
-    z-index: 9999;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
-    align-items: center;
-    justify-content: center;
-  }
+        /* 모바일 최적화 레이아웃 (768px 이하) */
+        @media (max-width: 768px) {
+            .gallery-grid {
+                column-count: 2; /* 태블릿/대형 스마트폰 2단 */
+                column-gap: 10px;
+            }
+            .filter-label { padding: 6px 14px; font-size: 12px; }
+        }
 
-  .modal-content {
-    max-width: 80%;
-    max-height: 85vh;
-    object-fit: contain;
-    border-radius: 4px;
-    user-select: none;
-  }
+        /* 초소형 모바일 (480px 이하) */
+        @media (max-width: 480px) {
+            .gallery-grid {
+                column-count: 1; /* 스마트폰 세로 1단 */
+            }
+        }
 
-  /* 닫기 및 좌우 이동 버튼 */
-  .modal-btn {
-    position: absolute;
-    color: #fff;
-    font-size: 50px;
-    font-weight: bold;
-    cursor: pointer;
-    user-select: none;
-    transition: 0.2s;
-    background: none;
-    border: none;
-    padding: 20px;
-  }
-  .modal-btn:hover { color: #aaa; }
-  
-  .close-btn { top: 10px; right: 20px; font-size: 40px; }
-  .prev-btn { left: 10px; }
-  .next-btn { right: 10px; }
+        /* 모달 최적화 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            align-items: center; justify-content: center;
+        }
 
-  /* 모바일에서 화살표 크기 조절 */
-  @media (max-width: 768px) {
-    .modal-btn { font-size: 35px; padding: 10px; }
-    .modal-content { max-width: 95%; }
-  }
-</style>
+        .modal-content {
+            max-width: 95%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        /* 모바일에서는 버튼을 더 크게, 터치하기 편하게 */
+        .modal-btn {
+            position: absolute;
+            color: #fff;
+            font-size: 35px;
+            cursor: pointer;
+            padding: 20px;
+            user-select: none;
+            z-index: 10000;
+        }
+        .close-btn { top: 10px; right: 10px; font-size: 40px; }
+        .prev-btn { left: 5px; top: 50%; transform: translateY(-50%); }
+        .next-btn { right: 5px; top: 50%; transform: translateY(-50%); }
+
+        @media (max-width: 768px) {
+            .modal-btn { font-size: 30px; padding: 15px; }
+            .prev-btn, .next-btn { background: rgba(0,0,0,0.2); border-radius: 50%; }
+        }
+    </style>
+</head>
+<body>
 
 <div class="gallery-container">
-  <input type="radio" id="filter-all" name="gallery-filter" checked>
-  <input type="radio" id="filter-type1" name="gallery-filter">
-  <input type="radio" id="filter-type2" name="gallery-filter">
-  <input type="radio" id="filter-type3" name="gallery-filter">
+    <input type="radio" id="filter-all" name="gallery-filter" checked>
+    <input type="radio" id="filter-type1" name="gallery-filter">
+    <input type="radio" id="filter-type2" name="gallery-filter">
+    <input type="radio" id="filter-type3" name="gallery-filter">
 
-  <div class="filter-controls">
-    <label for="filter-all">전체보기</label>
-    <label for="filter-type1">풀배경 일러스트</label>
-    <label for="filter-type2">디자인틱 일러스트</label>
-    <label for="filter-type3">스탠딩</label>
-  </div>
+    <div class="filter-controls">
+        <label for="filter-all" class="filter-label">전체보기</label>
+        <label for="filter-type1" class="filter-label">풀배경 일러스트</label>
+        <label for="filter-type2" class="filter-label">디자인틱 일러스트</label>
+        <label for="filter-type3" class="filter-label">스탠딩</label>
+    </div>
 
-  <div class="gallery-grid">
-  <!-- type1 -->
-  <div class="gallery-item type1"><img src="./type_A/1.jpg"></div>
-  <div class="gallery-item type1"><img src="./type_A/2.jpg"></div>
-  <div class="gallery-item type1"><img src="./type_A/3.jpg"></div>
-  <div class="gallery-item type1"><img src="./type_A/4.jpg"></div>
-  <div class="gallery-item type1"><img src="./type_A/5.jpg"></div>
-  <div class="gallery-item type1"><img src="./type_A/6.jpg"></div>
-  <div class="gallery-item type1"><img src="./type_A/7.jpg"></div>
+    <div class="gallery-grid" id="grid">
+          <!-- type1 -->
+  <div class="gallery-item" data-type="type1"><img src="./type_A/1.jpg"></div>
+  <div class="gallery-item" data-type="type1"><img src="./type_A/2.jpg"></div>
+  <div class="gallery-item" data-type="type1"><img src="./type_A/3.jpg"></div>
+  <div class="gallery-item" data-type="type1"><img src="./type_A/4.jpg"></div>
+  <div class="gallery-item" data-type="type1"><img src="./type_A/5.jpg"></div>
+  <div class="gallery-item" data-type="type1"><img src="./type_A/6.jpg"></div>
+  <div class="gallery-item" data-type="type1"><img src="./type_A/7.jpg"></div>
 
   <!-- type2 -->
-  <div class="gallery-item type2"><img src="./type_B/1.jpg"></div>
-  <div class="gallery-item type2"><img src="./type_B/2.jpg"></div>
-  <div class="gallery-item type2"><img src="./type_B/3.jpg"></div>
-  <div class="gallery-item type2"><img src="./type_B/4.jpg"></div>
-  <div class="gallery-item type2"><img src="./type_B/5.jpg"></div>
+  <div class="gallery-item" data-type="type2"><img src="./type_B/1.jpg"></div>
+  <div class="gallery-item" data-type="type2"><img src="./type_B/2.jpg"></div>
+  <div class="gallery-item" data-type="type2"><img src="./type_B/3.jpg"></div>
+  <div class="gallery-item" data-type="type2"><img src="./type_B/4.jpg"></div>
+  <div class="gallery-item" data-type="type2"><img src="./type_B/5.jpg"></div>
 
   <!-- type3 -->
-  <div class="gallery-item type3"><img src="./type_C/1.jpg"></div>
-</div>
+  <div class="gallery-item" data-type="type3"><img src="./type_C/1.jpg"></div>
+        </div>
 
-  <div id="imageModal" class="modal-overlay">
-    <span class="modal-btn close-btn" onclick="closeModal()">&times;</span>
-    <span class="modal-btn prev-btn" onclick="changeImage(-1)">&#10094;</span>
-    <img class="modal-content" id="expandedImg" src="">
-    <span class="modal-btn next-btn" onclick="changeImage(1)">&#10095;</span>
-  </div>
+    <div id="imageModal" class="modal-overlay">
+        <span class="modal-btn close-btn" onclick="closeModal()">&times;</span>
+        <span class="modal-btn prev-btn" onclick="changeImage(-1)">&#10094;</span>
+        <img id="expandedImg" class="modal-content" src="">
+        <span class="modal-btn next-btn" onclick="changeImage(1)">&#10095;</span>
+    </div>
 </div>
 
 <script>
-  let visibleImages = [];
-  let currentIndex = 0;
+    let visibleImages = [];
+    let currentIndex = 0;
 
-document.querySelectorAll('.gallery-item img').forEach(img => {
-  img.addEventListener('click', function() {
-    visibleImages = Array.from(document.querySelectorAll('.gallery-item img'))
-      .filter(img => window.getComputedStyle(img.parentElement).display !== 'none')
-      .map(img => img.src);
+    // 이미지 클릭 시 모달 열기
+    document.getElementById('grid').addEventListener('click', function(e) {
+        if(e.target.tagName === 'IMG') {
+            const allItems = Array.from(document.querySelectorAll('.gallery-item'));
+            visibleImages = allItems
+                .filter(item => getComputedStyle(item).display !== 'none')
+                .map(item => item.querySelector('img').src);
 
-    currentIndex = visibleImages.indexOf(this.src);
+            currentIndex = visibleImages.indexOf(e.target.src);
+            document.getElementById("expandedImg").src = e.target.src;
+            document.getElementById("imageModal").style.display = "flex";
+            document.body.style.overflow = "hidden"; // 배경 스크롤 방지
+        }
+    });
 
-    document.getElementById("expandedImg").src = this.src;
-    document.getElementById("imageModal").style.display = "flex";
-  });
-});
-
-  // 이전, 다음 버튼 클릭 시 이미지 변경
-  function changeImage(direction) {
-    currentIndex += direction;
-    
-    // 마지막 이미지에서 다음을 누르면 처음으로, 처음에서 이전을 누르면 마지막으로 순환
-    if (currentIndex >= visibleImages.length) {
-      currentIndex = 0;
-    } else if (currentIndex < 0) {
-      currentIndex = visibleImages.length - 1;
+    function changeImage(n) {
+        currentIndex += n;
+        if (currentIndex >= visibleImages.length) currentIndex = 0;
+        if (currentIndex < 0) currentIndex = visibleImages.length - 1;
+        document.getElementById("expandedImg").src = visibleImages[currentIndex];
     }
-    
-    document.getElementById("expandedImg").src = visibleImages[currentIndex];
-  }
 
-  // 모달창 닫기 함수
-  function closeModal() {
-    document.getElementById("imageModal").style.display = "none";
-  }
-
-  // 이미지가 아닌 어두운 배경을 클릭해도 모달창이 닫히도록 설정
-  document.getElementById("imageModal").addEventListener('click', function(e) {
-    if(e.target === this) {
-      closeModal();
+    function closeModal() {
+        document.getElementById("imageModal").style.display = "none";
+        document.body.style.overflow = "auto";
     }
-  });
+
+    // 배경 클릭 시 닫기
+    document.getElementById("imageModal").addEventListener('click', function(e) {
+        if(e.target === this) closeModal();
+    });
 </script>
+
+</body>
+</html>
